@@ -57,11 +57,26 @@ def process_supply_chain_data(csv_path):
     
     product_type_data = df.groupby('Product type')['Revenue generated'].sum().reset_index().to_dict(orient='records')
     
+    # New: Data by Location for the "Map" visualization
+    location_data = df.groupby('Location').agg({
+        'Revenue generated': 'sum',
+        'Number of products sold': 'sum',
+        'Stock levels': 'mean'
+    }).reset_index().to_dict(orient='records')
+    
+    # New: Histogram data (e.g., distribution of prices or sales)
+    # We'll just return the raw values for the frontend to bin if needed, 
+    # or a pre-binned distribution. Let's provide sales distribution.
+    sales_hist = df['Number of products sold'].tolist()
+    
     return {
         "summary": summary,
         "inventory": inventory_data,
         "shipping": shipping_data,
-        "product_types": product_type_data
+        "product_types": product_type_data,
+        "location_data": location_data,
+        "sales_hist": sales_hist,
+        "raw_data": df.to_dict(orient='records') # For frontend filtering
     }
 
 if __name__ == "__main__":
