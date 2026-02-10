@@ -201,11 +201,13 @@ const formatNumber = (value: number) => {
 </template>
 
 <style scoped>
+@reference "tailwindcss";
+
 .glass-card {
-  @apply bg-white bg-opacity-[0.03] backdrop-blur-xl border border-white border-opacity-[0.08] rounded-[2rem] shadow-2xl;
+  @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-[2rem] shadow-2xl;
 }
 
 .glass-panel {
-  @apply bg-black bg-opacity-20 backdrop-blur-md border border-white border-opacity-5 rounded-[2.5rem];
+  @apply bg-black/20 backdrop-blur-md border border-white/5 rounded-[2.5rem];
 }
 </style>

@@ -1,6 +1,12 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-brand-blue: #3b82f6;
+  --color-brand-green: #10b981;
+  --color-brand-dark: #111827;
+  --color-brand-surface: #1f2937;
+}
+
 
 :root {
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -32,10 +38,10 @@ body {
 
 @layer components {
   .glass-card {
-    @apply bg-white bg-opacity-5 backdrop-blur-lg border border-white border-opacity-10 rounded-2xl shadow-xl;
+    @apply bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl shadow-xl;
   }
   
   .glass-panel {
-    @apply bg-black bg-opacity-20 backdrop-blur-md border border-white border-opacity-5 rounded-3xl;
+    @apply bg-black/20 backdrop-blur-md border border-white/5 rounded-3xl;
   }
 }
