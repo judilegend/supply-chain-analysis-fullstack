@@ -28,6 +28,9 @@ import {
 import { Bar, Doughnut } from 'vue-chartjs';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement, PointElement, LineElement);
 
@@ -171,6 +174,85 @@ watch([selectedCategory, selectedLocation], () => {
     map.setView([20.5937, 78.9629], 4, { animate: true });
   }
 });
+
+const exportToPDF = () => {
+  if (!dashboardData.value) return;
+  const doc = new jsPDF();
+  
+  // Header
+  doc.setFontSize(22);
+  doc.setTextColor(59, 130, 246);
+  doc.text('SUPPLY CHAIN PRO v4', 14, 20);
+  
+  doc.setFontSize(10);
+  doc.setTextColor(100, 116, 139);
+  doc.text(`Rapport d'Analyse Logistique - Généré le ${new Date().toLocaleString('fr-FR')}`, 14, 28);
+  
+  // Summary Stats
+  doc.setFontSize(14);
+  doc.setTextColor(30, 41, 59);
+  doc.text('Résumé des Performances', 14, 40);
+  
+  doc.setFontSize(10);
+  doc.text(`Chiffre d'Affaires Total: ${formatCurrency(dashboardData.value.summary.total_revenue)}`, 14, 48);
+  doc.text(`Unités Vendues: ${formatNumber(dashboardData.value.summary.total_sold)}`, 14, 54);
+  doc.text(`Taux de Défaut Moyen: ${dashboardData.value.summary.avg_defect_rate}%`, 14, 60);
+
+  // Inventory Table
+  const tableData = dashboardData.value.inventory.map((item: any) => [
+    item.SKU,
+    item['Product type'],
+    item['Location'],
+    item['Stock levels'],
+    item['Number of products sold'],
+    formatCurrency(item['Revenue generated'])
+  ]);
+
+  (doc as any).autoTable({
+    startY: 70,
+    head: [['SKU', 'Catégorie', 'Région', 'Stock', 'Ventes', 'Revenu']],
+    body: tableData,
+    theme: 'striped',
+    headStyles: { fillColor: [59, 130, 246], fontStyle: 'bold' },
+    styles: { fontSize: 8, cellPadding: 2 }
+  });
+
+  doc.save(`Rapport_Logistique_${selectedLocation.value}.pdf`);
+};
+
+const exportToExcel = () => {
+  if (!dashboardData.value) return;
+  
+  // Prepare data for export
+  const exportData = dashboardData.value.inventory.map((item: any) => ({
+    'SKU': item.SKU,
+    'Catégorie': item['Product type'],
+    'Région': item['Location'],
+    'Prix': item['Price'],
+    'Ventes': item['Number of products sold'],
+    'Revenu': item['Revenue generated'],
+    'Stock': item['Stock levels'],
+    'Plaintes Client': item['Customer demographics'],
+    'Mode Transport': item['Transportation modes']
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Données Logistiques');
+  
+  // Add a summary sheet
+  const summaryData = [
+    ['Indicateur', 'Valeur'],
+    ['Chiffre d\'Affaires Total', dashboardData.value.summary.total_revenue],
+    ['Unités Vendues', dashboardData.value.summary.total_sold],
+    ['Taux de Défaut Moyen', dashboardData.value.summary.avg_defect_rate],
+    ['Date d\'Extraction', new Date().toLocaleString('fr-FR')]
+  ];
+  const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
+  XLSX.utils.book_append_sheet(workbook, summaryWS, 'Résumé');
+
+  XLSX.writeFile(workbook, `Rapport_SupplyChain_${selectedLocation.value}.xlsx`);
+};
 
 
 const formatCurrency = (value: number) => {
@@ -468,9 +550,14 @@ const salesHistData = computed(() => {
             </div>
           </div>
           
-          <button class="w-full mt-8 py-4 border border-blue-500/20 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 hover:bg-blue-500 hover:text-white transition-all">
-            Exporter le Rapport Complet (PDF/CSV)
-          </button>
+          <div class="flex gap-4 mt-8">
+            <button @click="exportToPDF" class="flex-grow py-4 bg-blue-500/10 border border-blue-500/20 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.4em] text-blue-400 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center gap-2">
+               Exporter PDF
+            </button>
+            <button @click="exportToExcel" class="flex-grow py-4 bg-emerald-500/10 border border-emerald-500/20 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center gap-2">
+               Exporter EXCEL
+            </button>
+          </div>
         </div>
       </div>
     </div>
