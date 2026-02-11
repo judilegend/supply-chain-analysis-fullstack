@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: supply-chain-analysis
+    env: python
+    buildCommand: |
+      cd frontend && npm install && npm run build
+      cd ../ && pip install -r requirement.txt
+    startCommand: gunicorn --chdir backend app:app
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: PYTHON_VERSION
+        value: 3.10.0
