@@ -7,10 +7,8 @@ import {
   Package, 
   AlertTriangle, 
   DollarSign,
-  Truck,
   MapPin,
   Filter,
-  BarChart3,
   Globe
 } from 'lucide-vue-next';
 import { 
@@ -67,8 +65,8 @@ onMounted(async () => {
     dashboardData.value = JSON.parse(JSON.stringify(data));
     
     const raw = data.raw_data;
-    categories.value = ['Tous', ...new Set(raw.map((item: any) => item['Product type']))];
-    locations.value = ['Toutes', ...new Set(raw.map((item: any) => item['Location']))];
+    categories.value = ['Tous', ...Array.from<string>(new Set(raw.map((item: any) => item['Product type'] as string)))];
+    locations.value = ['Toutes', ...Array.from<string>(new Set(raw.map((item: any) => item['Location'] as string)))];
     
     // Initialize Map after DOM is ready
     setTimeout(() => initMap(), 100);
@@ -263,6 +261,10 @@ const formatNumber = (value: number) => {
   return new Intl.NumberFormat('fr-FR').format(value);
 };
 
+const reloadPage = () => {
+  window.location.reload();
+};
+
 // Chart Options & Data
 const chartOptions = {
   responsive: true,
@@ -271,7 +273,7 @@ const chartOptions = {
     legend: { display: false },
     tooltip: {
       backgroundColor: 'rgba(15, 23, 42, 0.9)',
-      titleFont: { size: 14, weight: 'bold' },
+      titleFont: { size: 14, weight: 'bold' as const },
       padding: 12,
       cornerRadius: 8
     }
@@ -280,7 +282,7 @@ const chartOptions = {
     y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 10 } } },
     x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 10 } } }
   }
-};
+} as const;
 
 const revenueChartData = computed(() => {
   if (!dashboardData.value) return { labels: [], datasets: [] };
@@ -297,28 +299,12 @@ const revenueChartData = computed(() => {
   };
 });
 
-const locationChartData = computed(() => {
-  if (!dashboardData.value) return { labels: [], datasets: [] };
-  const labels = dashboardData.value.location_data.map((l: any) => l['Location']);
-  const data = dashboardData.value.location_data.map((l: any) => l['Revenue generated']);
-  return {
-    labels,
-    datasets: [{
-      label: 'Chiffre d\'Affaires (€)',
-      data,
-      backgroundColor: 'rgba(59, 130, 246, 0.5)',
-      borderColor: '#3b82f6',
-      borderWidth: 2,
-      borderRadius: 12,
-      hoverBackgroundColor: '#3b82f6'
-    }]
-  };
-});
+// unused locationChartData removed to fix TS6133
 
 const salesHistData = computed(() => {
   if (!dashboardData.value) return { labels: [], datasets: [] };
   // Create bins for histogram (0-200, 201-400, etc)
-  const bins = [0, 0, 0, 0, 0];
+  const bins: [number, number, number, number, number] = [0, 0, 0, 0, 0];
   dashboardData.value.sales_hist.forEach((s: number) => {
     if (s <= 200) bins[0]++;
     else if (s <= 400) bins[1]++;
@@ -405,7 +391,7 @@ const salesHistData = computed(() => {
       </div>
       <h2 class="text-3xl font-black text-white mb-4 uppercase italic tracking-tighter">Interruption du Flux</h2>
       <p class="text-slate-400 leading-relaxed mb-8">{{ error }}</p>
-      <button @click="window.location.reload()" class="px-10 py-5 bg-gradient-to-r from-rose-600 to-orange-600 hover:from-rose-500 hover:to-orange-500 rounded-[2rem] font-black uppercase text-xs tracking-[.3em] shadow-xl shadow-rose-900/40 transition-all active:scale-95">
+      <button @click="reloadPage()" class="px-10 py-5 bg-gradient-to-r from-rose-600 to-orange-600 hover:from-rose-500 hover:to-orange-500 rounded-[2rem] font-black uppercase text-xs tracking-[.3em] shadow-xl shadow-rose-900/40 transition-all active:scale-95">
         Relancer la Connexion
       </button>
     </div>
@@ -482,7 +468,7 @@ const salesHistData = computed(() => {
           </h3>
           <p class="text-slate-500 text-xs mb-8 uppercase font-bold tracking-widest">Distribution du volume par produit</p>
           <div class="h-[300px]">
-            <Bar :data="salesHistData" :options="chartOptions" />
+            <Bar :data="salesHistData" :options="(chartOptions as any)" />
           </div>
           <div class="mt-6 p-4 bg-white/5 rounded-2xl border border-white/5 text-[10px] text-slate-400 leading-relaxed uppercase tracking-widest text-center">
             Concentration majeure sur le segment <span class="text-emerald-400 font-black">201-400 unités</span>
@@ -499,7 +485,7 @@ const salesHistData = computed(() => {
           </h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-12 h-full items-center">
             <div class="h-64 relative group">
-              <Doughnut :data="revenueChartData" :options="{...chartOptions, cutout: '75%'}" />
+              <Doughnut :data="revenueChartData" :options="{...(chartOptions as any), cutout: '75%'}" />
               <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                  <span class="text-3xl font-black">{{ dashboardData.product_types.length }}</span>
                  <span class="text-[8px] uppercase font-black text-slate-500 tracking-[0.3em]">Secteurs</span>
@@ -513,7 +499,7 @@ const salesHistData = computed(() => {
                 </div>
                 <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
                   <div class="h-full bg-blue-500 group-hover:scale-x-105 origin-left transition-transform duration-500" 
-                       :style="{ width: `${(type['Revenue generated'] / dashboardData.summary.total_revenue) * 100}%`, backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'][idx] }"></div>
+                       :style="{ width: `${(type['Revenue generated'] / dashboardData.summary.total_revenue) * 100}%`, backgroundColor: (['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'] as any)[idx] }"></div>
                 </div>
               </div>
             </div>
