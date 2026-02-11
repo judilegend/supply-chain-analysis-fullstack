@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const isDev = import.meta.env.DEV;
+const API_BASE_URL = isDev ? 'http://localhost:5000/api' : '/api';
 
 export const getDashboardData = async () => {
     try {
